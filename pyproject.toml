@@ -10,7 +10,7 @@
 # There are some restrictions on what makes a valid project name
 # specification here:
 # https://packaging.python.org/specifications/core-metadata/#name
-name = "qshiproject"  # Required
+name = "qshiproj"  # Required
 
 # Versions should comply with PEP 440:
 # https://www.python.org/dev/peps/pep-0440/
@@ -103,7 +103,14 @@ classifiers = [  # Optional
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
 dependencies = [ # Optional
-  "peppercorn"
+	"peppercorn"
+	"h5py"
+	"pytorch"
+	"scipy"
+	"obspy"
+	"scikit-learn"
+	"pandas"
+	"multitaper"
 ]
 
 # List additional groups of dependencies here (e.g. development
