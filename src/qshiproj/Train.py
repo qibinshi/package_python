@@ -47,8 +47,10 @@ def train(configure_file='config.ini'):
     epochs = config.getint('training', 'epochs')
     minimum_epochs = config.getint('training', 'minimum_epochs')
     patience = config.getint('training', 'patience')
-    pre_trained_denote = config.get('directories', 'pre_trained_denote')
-    pre_trained_WaveDecompNet = config.get('directories', 'pre_trained_WaveDecompNet')
+#    pre_trained_denote = config.get('directories', 'pre_trained_denote')
+#    pre_trained_WaveDecompNet = config.get('directories', 'pre_trained_WaveDecompNet')
+    pre_trained_denote = 'DenoTe.pth'
+    pre_trained_WaveDecompNet = 'WaveDecompNet.pth'
 
     print('transfer', transfer)
     print('gpu', gpu)
