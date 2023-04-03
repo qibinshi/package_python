@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import scipy.signal as sgn
 from scipy.signal import detrend
-from distaz import DistAz
+from .distaz import DistAz
 from multitaper import MTSpec
 from obspy.taup import TauPyModel
 from obspy import read_inventory
@@ -20,9 +20,9 @@ from numpy.random import default_rng
 from scipy.interpolate import interp1d
 from scipy.fft import fft, fftfreq, ifft
 from scipy.integrate import cumulative_trapezoid, trapezoid
-from torch_tools import Explained_Variance_score, CCLoss
-from torch_tools import WaveformDataset
-from torch.utils.data import DataLoader
+from .torch_tools import Explained_Variance_score, CCLoss
+from .torch_tools import WaveformDataset
+from .torch.utils.data import DataLoader
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, MaxNLocator
