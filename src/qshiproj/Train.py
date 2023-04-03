@@ -10,6 +10,7 @@ import h5py
 import torch
 import random
 import configparser
+import pkg_resources
 import numpy as np
 import torch.nn as nn
 from matplotlib import pyplot as plt
@@ -47,10 +48,8 @@ def train(configure_file='config.ini'):
     epochs = config.getint('training', 'epochs')
     minimum_epochs = config.getint('training', 'minimum_epochs')
     patience = config.getint('training', 'patience')
-#    pre_trained_denote = config.get('directories', 'pre_trained_denote')
-#    pre_trained_WaveDecompNet = config.get('directories', 'pre_trained_WaveDecompNet')
-    pre_trained_denote = 'DenoTe.pth'
-    pre_trained_WaveDecompNet = 'WaveDecompNet.pth'
+    pre_trained_denote = pkg_resources.resource_filename('qshiproj', 'DenoTe.pth')
+    pre_trained_WaveDecompNet = pkg_resources.resource_filename('qshiproj', 'WaveDecompNet.pth')
 
     print('transfer', transfer)
     print('gpu', gpu)
