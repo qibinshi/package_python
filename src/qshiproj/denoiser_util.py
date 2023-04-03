@@ -22,7 +22,7 @@ from scipy.fft import fft, fftfreq, ifft
 from scipy.integrate import cumulative_trapezoid, trapezoid
 from .torch_tools import Explained_Variance_score, CCLoss
 from .torch_tools import WaveformDataset
-from .torch.utils.data import DataLoader
+from torch.utils.data import DataLoader
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, MaxNLocator
