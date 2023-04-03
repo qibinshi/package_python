@@ -151,7 +151,7 @@ denote = "Train:train"
 [tool.setuptools]
 # If there are data files included in your packages that need to be
 # installed, specify them here.
-package-data = ["*.pth", "*.txt"]
+package-data = {qshiproj = ["*.pth", "*.txt"]}
 
 [build-system]
 # These are the assumed default build requirements from pip:
