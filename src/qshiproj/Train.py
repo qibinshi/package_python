@@ -30,6 +30,7 @@ def train(configure_file='config.ini'):
     transfer = config.getint('training', 'transfer')
     gpu = config.getint('training', 'gpu')
     gpu_ids = config.get('training', 'gpu_ids')
+    gpu_ids = [int(x) for x in gpu_ids.split(',')]
     storage_home = config.get('directories', 'storage_home')
     data_dir = storage_home + config.get('directories', 'data_dir')
     model_dir = storage_home + config.get('directories', 'save_model_dir')
