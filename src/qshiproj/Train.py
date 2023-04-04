@@ -7,6 +7,7 @@ data augmented on the fly.
 @auther: Qibin Shi (qibins@uw.edu)
 """
 import h5py
+import copy
 import torch
 import random
 import configparser
@@ -20,7 +21,7 @@ from sklearn.model_selection import train_test_split
 from .torch_tools import WaveformDataset, try_gpu, CCMSELoss
 from .torch_tools import training_loop_branches_augmentation
 from .denoiser_util import mkdir, write_progress
-from .autoencoder_1D_models_torch import T_model
+from .autoencoder_1D_models_torch import T_model, SeismogramEncoder, SeismogramDecoder, SeisSeparator
 
 
 def train(configure_file='config.ini'):
@@ -121,11 +122,17 @@ def train(configure_file='config.ini'):
     devc = try_gpu(i=gpu)
     if transfer:
         # %% transfer learning from DenoTe-P
+        bottleneck = torch.nn.LSTM(64, 32, 2, bidirectional=True,batch_first=True, dtype=torch.float64)
+        decoder_earthquake = SeismogramDecoder(bottleneck=bottleneck)
+        decoder_noise = SeismogramDecoder(bottleneck=bottleneck)
         if torch.cuda.device_count() > gpu:
-            model = torch.load(pre_trained_denote, map_location=devc)
+            model = SeisSeparator(model_name, SeismogramEncoder(), decoder_earthquake, decoder_noise).to(device=devc)
+            model.load_state_dict(torch.load(pre_trained_denote))
+
             model.to(devc)
         else:
-            model = torch.load(pre_trained_denote, map_location=try_gpu(i=0))
+            model = SeisSeparator(model_name, SeismogramEncoder(), decoder_earthquake, decoder_noise).to(device=try_gpu(i=0))
+            model.load_state_dict(torch.load(pre_trained_denote))
             model = model.module.to(try_gpu(i=10))
     else:
         # %% Wrap WaveDecompNet with random weights
