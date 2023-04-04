@@ -128,7 +128,7 @@ def train(configure_file='config.ini'):
         if torch.cuda.device_count() > gpu:
             model = SeisSeparator(model_name, SeismogramEncoder(), decoder_earthquake, decoder_noise).to(device=devc)
             model = T_model(model, half_insize=int(npts/2))
-            model.load_state_dict(torch.load(pre_trained_denote))
+#            model.load_state_dict(torch.load(pre_trained_denote))
 
             model.to(devc)
         else:
