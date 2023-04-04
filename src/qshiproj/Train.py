@@ -126,16 +126,15 @@ def train(configure_file='config.ini'):
         decoder_earthquake = SeismogramDecoder(bottleneck=bottleneck)
         decoder_noise = SeismogramDecoder(bottleneck=bottleneck)
         if torch.cuda.device_count() > gpu:
-            model = SeisSeparator(model_name, SeismogramEncoder(), decoder_earthquake, decoder_noise).to(device=devc)
+            model = SeisSeparator(model_name, SeismogramEncoder(), decoder_earthquake, decoder_noise)
             model = T_model(model, half_insize=int(npts/2))
 #            model.load_state_dict(torch.load(pre_trained_denote))
-
             model.to(devc)
         else:
-            model = SeisSeparator(model_name, SeismogramEncoder(), decoder_earthquake, decoder_noise).to(device=try_gpu(i=0))
+            model = SeisSeparator(model_name, SeismogramEncoder(), decoder_earthquake, decoder_noise)
             model = T_model(model, half_insize=int(npts/2))
-            model.load_state_dict(torch.load(pre_trained_denote))
-            model = model.module.to(try_gpu(i=10))
+            model.load_state_dict(torch.load(pre_trained_denote, map_location=devc))
+            model = model.module.to(devc)
     else:
         # %% Wrap WaveDecompNet with random weights
         if torch.cuda.device_count() > gpu:
@@ -190,7 +189,7 @@ def train(configure_file='config.ini'):
     write_progress(progress_file, text_contents="Training is done!" + '\n')
 
     # %% Save the model
-    torch.save(model.state_dict(), model_dir + f'/{model_name}_weights.pth')
+    torch.save(model.module.state_dict(), model_dir + f'/{model_name}_weights.pth')
 
     # %% Save the training history
     loss = avg_train_losses
