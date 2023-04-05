@@ -22,7 +22,7 @@ from multiprocessing import Pool
 from numpy.random import default_rng
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
-from .denoiser_util import mkdir, write_progress
+from .denoiser_util import mkdir, write_progress, waveform_fft
 from .torch_tools import try_gpu, CCMSELoss, Explained_Variance_score, CCLoss
 from .torch_tools import WaveformDataset, training_loop_branches_augmentation
 from .autoencoder_1D_models_torch import T_model, SeismogramEncoder, SeismogramDecoder, SeisSeparator
