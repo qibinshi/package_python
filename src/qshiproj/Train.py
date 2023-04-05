@@ -136,7 +136,7 @@ def train(configure_file='config.ini'):
 
         # %% load pre-trained weights for DenoTe
         if torch.cuda.device_count() > gpu:
-            model.load_state_dict(torch.load(pre_trained_denote), strict=False)
+            model.load_state_dict(torch.load(pre_trained_denote))
             model.to(devc)
         else:
             model.load_state_dict(torch.load(pre_trained_denote, map_location=devc))
