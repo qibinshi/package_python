@@ -336,7 +336,6 @@ def test(configure_file='config.ini'):
     mkdir(fig_dir)
     dt = 0.1
     frac = 0.45  # smallest window start
-    batch_size = 100
     bottleneck_name = 'LSTM'
     model_structure = "Branch_Encoder_Decoder"
     model_name = model_structure + "_" + bottleneck_name
@@ -418,7 +417,7 @@ def test(configure_file='config.ini'):
     partial_func = partial(plot_testing, directory=fig_dir, dt=dt, npts=npts)
     num_proc = min(os.cpu_count(), batch_size)
     pool = Pool(processes=num_proc)
-    print("#" * 12 + " Plotting waveforms using " + str(num_proc) + "CPUs" + "#" * 12)
+    print("#" * 12 + " Plotting waveforms using " + str(num_proc) + " CPUs " + "#" * 12)
 
     result = pool.starmap(partial_func, zip(noisy_signal,
                                             denoised_signal,
