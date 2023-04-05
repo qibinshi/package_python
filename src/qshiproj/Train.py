@@ -120,39 +120,46 @@ def train(configure_file='config.ini'):
     # %% Neural Net structure
     print("#" * 12 + " Loading model " + model_name + " " + "#" * 12)
     devc = try_gpu(i=gpu)
+
+    # %% construct WaveDecompNet first
+    bottleneck = torch.nn.LSTM(64, 32, 2, bidirectional=True, batch_first=True, dtype=torch.float64)
+    bottleneck_earthquake = copy.deepcopy(bottleneck)
+    bottleneck_noise = copy.deepcopy(bottleneck)
+    encoder = SeismogramEncoder()
+    decoder_earthquake = SeismogramDecoder(bottleneck=bottleneck_earthquake)
+    decoder_noise = SeismogramDecoder(bottleneck=bottleneck_noise)
+    model = SeisSeparator(model_name, encoder, decoder_earthquake, decoder_noise)
+
     if transfer:
-        # %% transfer learning from DenoTe-P
-        bottleneck = torch.nn.LSTM(64, 32, 2, bidirectional=True,batch_first=True, dtype=torch.float64)
-        decoder_earthquake = SeismogramDecoder(bottleneck=bottleneck)
-        decoder_noise = SeismogramDecoder(bottleneck=bottleneck)
+        # %% keep constructing for DenoTe
+        model = T_model(model, half_insize=int(npts / 2))
+
+        # %% load pre-trained weights for DenoTe
         if torch.cuda.device_count() > gpu:
-            model = SeisSeparator(model_name, SeismogramEncoder(), decoder_earthquake, decoder_noise)
-            model = T_model(model, half_insize=int(npts/2))
-#            model.load_state_dict(torch.load(pre_trained_denote))
+            model.load_state_dict(torch.load(pre_trained_denote), strict=False)
             model.to(devc)
         else:
-            model = SeisSeparator(model_name, SeismogramEncoder(), decoder_earthquake, decoder_noise)
-            model = T_model(model, half_insize=int(npts/2))
             model.load_state_dict(torch.load(pre_trained_denote, map_location=devc))
             model = model.module.to(devc)
     else:
-        # %% Wrap WaveDecompNet with random weights
+        # %% load weights for WaveDecompNet
         if torch.cuda.device_count() > gpu:
-            model = torch.load(pre_trained_WaveDecompNet, map_location=devc)
-
+            model.load_state_dict(torch.load(pre_trained_WaveDecompNet))
+            # %% freeze these weights
             # for param in model.parameters():
             #     param.requires_grad = False
 
+            # %% Wrap as DenoTe, with a pre-trained kernel
+            model = T_model(model, half_insize=int(npts / 2))
+
             # %% Data parallelism for multiple GPUs,
             # %! model=model.module.to(device) for application on CPU
-            model = T_model(model, half_insize=int(npts/2))
             if torch.cuda.device_count() > 1:
                 print("Let's use", torch.cuda.device_count(), "GPUs!")
                 model = nn.DataParallel(model, device_ids=gpu_ids)
-                # model = nn.DataParallel(model)
-                model.to(devc)
+            model.to(devc)
         else:
-            model = torch.load(pre_trained_WaveDecompNet, map_location=try_gpu(i=0))
+            model.load_state_dict(torch.load(pre_trained_WaveDecompNet, map_location=devc))
             model = model.module.to(devc)
 
     n_para = 0
