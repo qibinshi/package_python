@@ -607,7 +607,7 @@ def WDN_compose():
     decoder_earthquake = SeismogramDecoder(bottleneck=bottleneck_earthquake)
     decoder_noise = SeismogramDecoder(bottleneck=bottleneck_noise)
 
-    model = SeisSeparator(model_name, encoder, decoder_earthquake, decoder_noise)
+    model = SeisSeparator('WDN', encoder, decoder_earthquake, decoder_noise)
 
     return model
 
