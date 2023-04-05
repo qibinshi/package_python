@@ -124,7 +124,7 @@ def train(configure_file='config.ini'):
             model.to(devc)
         else:
             model.load_state_dict(torch.load(pre_trained_denote, map_location=devc))
-            model = model.module.to(devc)
+
     else:
         # %% load weights for WaveDecompNet
         if torch.cuda.device_count() > gpu:
@@ -144,7 +144,6 @@ def train(configure_file='config.ini'):
             model.to(devc)
         else:
             model.load_state_dict(torch.load(pre_trained_WaveDecompNet, map_location=devc))
-            model = model.module.to(devc)
 
     n_para = 0
     for idx, param in enumerate(model.parameters()):
@@ -354,7 +353,6 @@ def test(configure_file='config.ini'):
 
     # %% load pre-trained weights for DenoTe
     model.load_state_dict(torch.load(denote_weights, map_location=devc))
-    model = model.module.to(devc)
     model.eval()
 
 
