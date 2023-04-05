@@ -6,6 +6,8 @@ data augmented on the fly.
 
 @auther: Qibin Shi (qibins@uw.edu)
 """
+
+import os
 import h5py
 import copy
 import torch
