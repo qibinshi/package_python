@@ -359,7 +359,7 @@ def test(configure_file='config.ini'):
     print("#" * 12 + " Augment data and feed to the model " + "#" * 12)
     with torch.no_grad():
         data_iter = iter(test_iter)
-        X0, y0 = data_iter.next()
+        X0, y0 = next(data_iter)
 
         # %% Augmentation: 1-squeeze 2-shift 3-stack
         nbatch = X0.size(0)
