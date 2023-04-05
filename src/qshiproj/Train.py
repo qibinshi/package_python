@@ -117,7 +117,8 @@ def train(configure_file='config.ini'):
     torch.manual_seed(99)
     torch.backends.cudnn.benchmark = False
 
-    # %% Neural Net structure
+
+    ############ %% Neural Net structure %% ###############
     print("#" * 12 + " Loading model " + model_name + " " + "#" * 12)
     devc = try_gpu(i=gpu)
 
@@ -137,6 +138,12 @@ def train(configure_file='config.ini'):
         # %% load pre-trained weights for DenoTe
         if torch.cuda.device_count() > gpu:
             model.load_state_dict(torch.load(pre_trained_denote))
+
+            # %% Data parallelism for multiple GPUs,
+            # %! model=model.module.to(device) for application on CPU
+            if torch.cuda.device_count() > 1:
+                print("Available number of GPUs", torch.cuda.device_count(), "Let's use GPU:", gpu_ids)
+                model = nn.DataParallel(model, device_ids=gpu_ids)
             model.to(devc)
         else:
             model.load_state_dict(torch.load(pre_trained_denote, map_location=devc))
@@ -155,7 +162,7 @@ def train(configure_file='config.ini'):
             # %% Data parallelism for multiple GPUs,
             # %! model=model.module.to(device) for application on CPU
             if torch.cuda.device_count() > 1:
-                print("Let's use", torch.cuda.device_count(), "GPUs!")
+                print("Available number of GPUs", torch.cuda.device_count(), "Let's use GPU:", gpu_ids)
                 model = nn.DataParallel(model, device_ids=gpu_ids)
             model.to(devc)
         else:
@@ -196,7 +203,10 @@ def train(configure_file='config.ini'):
     write_progress(progress_file, text_contents="Training is done!" + '\n')
 
     # %% Save the model
-    torch.save(model.module.state_dict(), model_dir + f'/{model_name}_weights.pth')
+    if torch.cuda.device_count() > gpu and torch.cuda.device_count() > 1:
+        torch.save(model.module.state_dict(), model_dir + f'/{model_name}_weights.pth')
+    else:
+        torch.save(model.state_dict(), model_dir + f'/{model_name}_weights.pth')
 
     # %% Save the training history
     loss = avg_train_losses
