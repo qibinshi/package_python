@@ -10,11 +10,13 @@ import h5py
 import copy
 import torch
 import random
+import matplotlib
 import configparser
 import pkg_resources
 import numpy as np
 import torch.nn as nn
-from matplotlib import pyplot as plt
+from functools import partial
+from multiprocessing import Pool
 from numpy.random import default_rng
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
@@ -22,6 +24,10 @@ from .torch_tools import WaveformDataset, try_gpu, CCMSELoss
 from .torch_tools import training_loop_branches_augmentation
 from .denoiser_util import mkdir, write_progress
 from .autoencoder_1D_models_torch import T_model, SeismogramEncoder, SeismogramDecoder, SeisSeparator
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
+
+matplotlib.rcParams.update({'font.size': 12})
 
 
 def train(configure_file='config.ini'):
