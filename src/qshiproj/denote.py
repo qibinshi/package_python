@@ -272,6 +272,8 @@ def test(configure_file='config.ini'):
     config = configparser.ConfigParser()
     config.read(configure_file)
 
+    retrain = config.getint('testing', 'retrain')
+    retrained_weights = config.get('testing', 'retrained_weights')
     gpu = config.getint('training', 'gpu')
     gpu_ids = config.get('training', 'gpu_ids')
     gpu_ids = [int(x) for x in gpu_ids.split(',')]
@@ -301,6 +303,11 @@ def test(configure_file='config.ini'):
         wave_raw = demo_train_data
     else:
         wave_raw = data_dir + data_file
+
+    if retrain:
+        denote_weights = retrained_weights
+    else:
+        denote_weights = pre_trained_denote
 
     print('gpu', gpu)
     print('use demo data', use_demo)
@@ -346,7 +353,7 @@ def test(configure_file='config.ini'):
     model = T_model(model, half_insize=int(npts / 2))
 
     # %% load pre-trained weights for DenoTe
-    model.load_state_dict(torch.load(pre_trained_denote, map_location=devc))
+    model.load_state_dict(torch.load(denote_weights, map_location=devc))
     model = model.module.to(devc)
     model.eval()
 
