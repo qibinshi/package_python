@@ -345,6 +345,10 @@ def test(configure_file='config.ini'):
     training_data, validate_data, test_data = read_split_data(wave_raw, branch_signal, branch_noise, npts,
                                                               train_size, test_size, rand_seed1, rand_seed2)
 
+    if batch_size > len(test_data):
+        batch_size = len(test_data)
+        print("batch size is reduced to the # of test data", batch_size)
+
     test_iter = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     ############ %% Neural Net structure %% ###############
