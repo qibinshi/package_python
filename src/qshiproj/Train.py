@@ -50,8 +50,8 @@ def train(configure_file='config.ini'):
     epochs = config.getint('training', 'epochs')
     minimum_epochs = config.getint('training', 'minimum_epochs')
     patience = config.getint('training', 'patience')
-    pre_trained_denote = pkg_resources.resource_filename(__name__, 'DenoTe_wt.pth')
-    pre_trained_WaveDecompNet = pkg_resources.resource_filename(__name__, 'WaveDecompNet.pth')
+    pre_trained_denote = pkg_resources.resource_filename(__name__, 'pretrained_models/DenoTe_wt.pth')
+    pre_trained_WaveDecompNet = pkg_resources.resource_filename(__name__, 'pretrained_models/WaveDecompNet_weights.pth')
 
     print('transfer', transfer)
     print('gpu', gpu)
