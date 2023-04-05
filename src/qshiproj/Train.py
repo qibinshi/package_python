@@ -63,7 +63,7 @@ def train(configure_file='config.ini'):
     print('transfer', transfer)
     print('gpu', gpu)
     print('use demo data', use_demo)
-    print('dataset path', data_dir)
+    print('dataset path', wave_raw)
     print('directory to save model', model_dir)
     print('half of the length of waveform', half_length)
     print('fraction for training', train_size)
