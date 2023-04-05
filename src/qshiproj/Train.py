@@ -36,6 +36,7 @@ def train(configure_file='config.ini'):
     data_dir = storage_home + config.get('directories', 'data_dir')
     model_dir = storage_home + config.get('directories', 'save_model_dir')
     data_file = config.get('data', 'data_file')
+    use_demo = config.getint('data', 'use_demo')
     half_length = config.getint('data', 'half_length')
     strmax = config.getint('data', 'stretch_max')
     npts = config.getint('data', 'npts')
@@ -52,23 +53,29 @@ def train(configure_file='config.ini'):
     patience = config.getint('training', 'patience')
     pre_trained_denote = pkg_resources.resource_filename(__name__, 'pretrained_models/Denote_weights.pth')
     pre_trained_WaveDecompNet = pkg_resources.resource_filename(__name__, 'pretrained_models/WaveDecompNet_weights.pth')
+    demo_train_data = pkg_resources.resource_filename(__name__, 'datasets/demo_train_dataset.hdf5')
+
+    if use_demo:
+        wave_raw = demo_train_data
+    else:
+        wave_raw = data_dir + data_file
 
     print('transfer', transfer)
     print('gpu', gpu)
-    print('data_dir', data_dir)
-    print('model_dir', model_dir)
-    print('half_length', half_length)
-    print('train_size', train_size)
-    print('test_size', test_size*(1-train_size))
-    print('rand_seed', rand_seed1, rand_seed2)
-    print('batch_size', batch_size)
+    print('use demo data', use_demo)
+    print('dataset path', data_dir)
+    print('directory to save model', model_dir)
+    print('half of the length of waveform', half_length)
+    print('fraction for training', train_size)
+    print('fraction for testing', test_size * (1 - train_size))
+    print('random seeds', rand_seed1, rand_seed2)
+    print('batch size', batch_size)
     print('learning rate', lr)
-    print('epochs', epochs)
-    print('minimum_epochs', minimum_epochs)
-    print('patience', patience)
-    print('gpu_ids', gpu_ids)
+    print('# epochs', epochs)
+    print('min. # epochs', minimum_epochs)
+    print('patience before stopping', patience)
+    print('gpu IDs', gpu_ids)
 
-    wave_raw = data_dir + data_file
     mid_pt = half_length
 
     progress_file = model_dir + '/Running_progress.txt'
