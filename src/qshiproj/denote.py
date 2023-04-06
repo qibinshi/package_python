@@ -499,9 +499,11 @@ def predict(configure_file='config.ini'):
     with h5py.File(wave_raw, 'r') as f:
         input_raw = f['quake'][:, start_pt:start_pt + npts, :]
 
+    batch_size = len(input_raw)
+    print('# of input waveforms:', batch_size)
     # %% load data for pytorch
     test_data = WaveformDataset(input_raw, input_raw)
-    test_iter = DataLoader(test_data, batch_size=len(input_raw), shuffle=False)
+    test_iter = DataLoader(test_data, batch_size=batch_size, shuffle=False)
     data_iter = iter(test_iter)
     x0, y0 = next(data_iter)
 
