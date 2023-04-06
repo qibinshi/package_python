@@ -519,7 +519,7 @@ def predict(configure_file='config.ini'):
         x[i] = quake_one
 
     ############ %% Neural Net structure %% ###############
-    print("#" * 12 + " Loading model " + model_name + " " + "#" * 12)
+    print("#" * 12 + " Loading model " + "#" * 12)
     devc = torch.device('cpu')
 
     # %% construct a WaveDecompNet kernel first
