@@ -621,6 +621,7 @@ def predict(configure_file='config.ini'):
     plt.savefig(rslt_dir + '/SNR.pdf')
 
     # %% Save the separated quake and noise
+    scale = scale.numpy()
     for i in np.arange(batch_size):
         for j in np.arange(x0.size(1)):
             denoised_signal[i, j, :] = denoised_signal[i, j, :] * scale[i, j]
