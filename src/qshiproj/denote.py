@@ -627,7 +627,7 @@ def predict(configure_file='config.ini'):
             denoised_signal[i, j, :] = denoised_signal[i, j, :] * scale[i, j]
             separated_noise[i, j, :] = separated_noise[i, j, :] * scale[i, j]
 
-    with h5py.File(directory + '/' + 'separated_quake_and_noise.hdf5', 'w') as f:
+    with h5py.File(rslt_dir + '/separated_quake_and_noise.hdf5', 'w') as f:
         f.create_dataset("quake", data=denoised_signal)
         f.create_dataset("noise", data=separated_noise)
 
