@@ -367,6 +367,7 @@ def test(configure_file='config.ini'):
 
 
     print("#" * 12 + " Augment data and feed to the model " + "#" * 12)
+    print("start, end, squeezing ratio")
     with torch.no_grad():
         data_iter = iter(test_iter)
         X0, y0 = next(data_iter)
@@ -461,6 +462,54 @@ def test(configure_file='config.ini'):
     ax[1].legend(loc=2)
 
     plt.savefig(fig_dir + f'/statistics_of_scores.pdf')
+
+
+def predict(configure_file='config.ini'):
+    config = configparser.ConfigParser()
+    config.read(configure_file)
+
+    retrain = config.getint('testing', 'retrain')
+    retrained_weights = config.get('testing', 'retrained_weights')
+    storage_home = config.get('directories', 'storage_home')
+    data_wave = storage_home + config.get('prediction', 'data_wave')
+    rslt_dir = storage_home + config.get('prediction', 'result_dir')
+    npts = config.getint('prediction', 'npts')
+    start_pt = config.getint('prediction', 'start_point')
+    pre_trained_denote = pkg_resources.resource_filename(__name__, 'pretrained_models/Denote_weights.pth')
+    demo_train_data = pkg_resources.resource_filename(__name__, 'datasets/demo_train_dataset.hdf5')
+
+    if retrain:
+        denote_weights = retrained_weights
+    else:
+        denote_weights = pre_trained_denote
+
+    mkdir(rslt_dir)
+
+    ############ %% Input data %% ###############
+    print("#" * 12 + " Loading noisy data " + "#" * 12)
+    with h5py.File(data_wave, 'r') as f:
+        input_raw = f['pwave'][:, start_pt:start_pt + npts, :]
+
+    ############ %% Neural Net structure %% ###############
+    print("#" * 12 + " Loading model " + model_name + " " + "#" * 12)
+    devc = torch.device('cpu')
+
+    # %% construct a WaveDecompNet kernel first
+    model = WDN_compose()
+
+    # %% keep constructing for DenoTe
+    model = T_model(model, half_insize=int(npts / 2))
+
+    # %% load pre-trained weights for DenoTe
+    model.load_state_dict(torch.load(denote_weights, map_location=devc))
+    model.eval()
+
+
+
+
+
+
+
 
 
 def plot_testing(noisy_signal, denoised_signal, separated_noise, clean_signal, true_noise, idx, sqz, directory=None, dt=0.1, npts=None):
