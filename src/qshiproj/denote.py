@@ -471,24 +471,48 @@ def predict(configure_file='config.ini'):
     retrain = config.getint('testing', 'retrain')
     retrained_weights = config.get('testing', 'retrained_weights')
     storage_home = config.get('directories', 'storage_home')
+    use_demo = config.getint('prediction', 'use_demo')
     data_wave = storage_home + config.get('prediction', 'data_wave')
     rslt_dir = storage_home + config.get('prediction', 'result_dir')
     npts = config.getint('prediction', 'npts')
     start_pt = config.getint('prediction', 'start_point')
     pre_trained_denote = pkg_resources.resource_filename(__name__, 'pretrained_models/Denote_weights.pth')
-    demo_train_data = pkg_resources.resource_filename(__name__, 'datasets/demo_train_dataset.hdf5')
+    demo_noisy_input = pkg_resources.resource_filename(__name__, 'datasets/demo_noisy_input.hdf5')
 
     if retrain:
         denote_weights = retrained_weights
     else:
         denote_weights = pre_trained_denote
 
+    if use_demo:
+        wave_raw = demo_noisy_input
+    else:
+        wave_raw = data_wave
+
     mkdir(rslt_dir)
+    dt = 0.1
 
     ############ %% Input data %% ###############
     print("#" * 12 + " Loading noisy data " + "#" * 12)
-    with h5py.File(data_wave, 'r') as f:
+    with h5py.File(wave_raw, 'r') as f:
         input_raw = f['pwave'][:, start_pt:start_pt + npts, :]
+
+    # %% load data for pytorch
+    test_data = WaveformDataset(input_raw, input_raw)
+    test_iter = DataLoader(test_data, batch_size=len(input_raw), shuffle=False)
+    data_iter = iter(test_iter)
+    x0, y0 = next(data_iter)
+
+    x = torch.zeros(batch_size, x0.size(1), npts, dtype=torch.float64)
+    scale = torch.ones(batch_size, x0.size(1), dtype=torch.float64)
+    for i in np.arange(batch_size):
+        quake_one = x0[i, :, :]
+        scale_mean = torch.mean(quake_one, dim=1)
+        scale_std = torch.std(quake_one, dim=1) + 1e-12
+        for j in np.arange(x0.size(1)):
+            quake_one[j] = torch.div(torch.sub(quake_one[j], scale_mean[j]), scale_std[j])
+            scale[i, j] = scale_std[j]
+        x[i] = quake_one
 
     ############ %% Neural Net structure %% ###############
     print("#" * 12 + " Loading model " + model_name + " " + "#" * 12)
@@ -504,12 +528,103 @@ def predict(configure_file='config.ini'):
     model.load_state_dict(torch.load(denote_weights, map_location=devc))
     model.eval()
 
+    ############ %% Denoise %% ###############
+    with torch.no_grad():
+        quake_denoised, noise_output = model(x)
+    noisy_signal = x.numpy()
+    denoised_signal = quake_denoised.numpy()
+    separated_noise = noise_output.numpy()
 
+    # %% signal-noise ratio of velocity waveforms
+    noise_amp = np.std(noisy_signal[:, :, int(npts / 2) - 300: int(npts / 2) - 100], axis=-1)
+    signl_amp = np.std(noisy_signal[:, :, int(npts / 2): int(npts / 2) + 300], axis=-1)
+    snr_before = 20 * np.log10(np.divide(signl_amp, noise_amp + 1e-12) + 1e-12)
 
+    noise_amp = np.std(denoised_signal[:, :, int(npts / 2) - 300: int(npts / 2) - 100], axis=-1)
+    signl_amp = np.std(denoised_signal[:, :, int(npts / 2): int(npts / 2) + 300], axis=-1)
+    snr_after = 20 * np.log10(np.divide(signl_amp, noise_amp + 1e-12) + 1e-12)
 
+    # %% visualize the first 3-component waveform
+    plt.close("all")
+    comps = ['E', 'N', 'Z']
+    gs_kw = dict(height_ratios=[1, 1, 1, 2, 2])
+    fig, ax = plt.subplots(4, 3, gridspec_kw=gs_kw, figsize=(12, 12), constrained_layout=True)
+    for i in range(3):
+        scaling_factor = np.max(abs(noisy_signal[i, :]))
+        _, spect_noisy_signal = waveform_fft(noisy_signal[i, :] / scaling_factor, dt)
+        _, spect_noise = waveform_fft(separated_noise[i, :] / scaling_factor, dt)
+        freq, spect_denoised_signal = waveform_fft(denoised_signal[i, :] / scaling_factor, dt)
 
+        ax[i, 0].plot(time, noisy_signal[i, :] / scaling_factor, '-k', label='Noisy signal', linewidth=1)
+        ax[i, 1].plot(time, denoised_signal[i, :] / scaling_factor, '-r', label='Predicted signal', linewidth=1)
+        ax[i, 2].plot(time, separated_noise[i, :] / scaling_factor, '-b', label='Predicted noise', linewidth=1)
+        ax[3, i].loglog(freq, spect_noisy_signal, '-k', label='raw signal', linewidth=0.5, alpha=1)
+        ax[3, i].loglog(freq, spect_denoised_signal, '-r', label='separated earthquake', linewidth=0.5, alpha=1)
+        ax[3, i].loglog(freq, spect_noise, '-b', label='noise', linewidth=0.5, alpha=0.8)
 
+        ax[i, 0].set_ylabel(comps[i], fontsize=16)
+        ax[3, i].set_xlabel('Frequency (Hz)', fontsize=14)
+        ax[3, i].set_title(comps[i], fontsize=16)
+        ax[3, i].grid(alpha=0.2)
 
+        for j in range(3):
+            ax[i, j].xaxis.set_visible(False)
+            ax[i, j].yaxis.set_ticks([])
+            ax[i, j].spines['right'].set_visible(False)
+            ax[i, j].spines['left'].set_visible(False)
+            ax[i, j].spines['top'].set_visible(False)
+            ax[i, j].spines['bottom'].set_visible(False)
+
+            if i == 2:
+                ax[i, j].xaxis.set_visible(True)
+                ax[i, j].spines['bottom'].set_visible(True)
+                ax[i, j].set_xlabel('time (s)', fontsize=14)
+            if i <= 2:
+                ax[i, j].set_xlim(0, npts * dt)
+                ax[i, j].set_ylim(-1, 1)
+
+    ax[0, 0].set_title("Original signal", fontsize=16)
+    ax[0, 1].set_title("Denoised quake", fontsize=16)
+    ax[0, 2].set_title("Separated noise", fontsize=16)
+    ax[3, 0].set_ylabel('velocity spectra', fontsize=14)
+    ax[3, 2].legend(loc=3)
+
+    plt.savefig(rslt_dir + '/sample_time_spec.pdf')
+
+    # %% SNR histograms
+    bins = np.linspace(0, 100, 20)
+    plt.close("all")
+
+    fig, ax = plt.subplots(1, 2, figsize=(4, 4), constrained_layout=True)
+    ax[0].hist(snr_before.flatten(), bins=bins, density=True,
+                  histtype='stepfilled', color='0.9', alpha=0.5, label='noisy', lw=2)
+    ax[0].hist(snr_after.flatten(), bins=bins, density=True,
+                  histtype='stepfilled', color='r', alpha=0.3, label='denoised', lw=2)
+    ax[0].set_title('All components', fontsize=24)
+    ax[0].set_xlabel('SNR', fontsize=24)
+    ax[0].set_ylabel('density', fontsize=24)
+    ax[0].legend(loc=1)
+
+    ax[1].hist(np.nanmax(snr_before, axis=1), bins=bins, density=True,
+               histtype='stepfilled', color='0.9', alpha=0.5, label='noisy', lw=2)
+    ax[1].hist(np.nanmax(snr_after, axis=1), bins=bins, density=True,
+               histtype='stepfilled', color='r', alpha=0.3, label='denoised', lw=2)
+    ax[1].set_title('Best components', fontsize=24)
+    ax[1].set_xlabel('SNR', fontsize=24)
+    ax[1].set_ylabel('density', fontsize=24)
+    ax[1].legend(loc=1)
+
+    plt.savefig(rslt_dir + '/SNR.pdf')
+
+    # %% Save the separated quake and noise
+    for i in np.arange(batch_size):
+        for j in np.arange(x0.size(1)):
+            denoised_signal[i, j, :] = denoised_signal[i, j, :] * scale[i, j]
+            separated_noise[i, j, :] = separated_noise[i, j, :] * scale[i, j]
+
+    with h5py.File(directory + '/' + 'separated_quake_and_noise.hdf5', 'w') as f:
+        f.create_dataset("quake", data=denoised_signal)
+        f.create_dataset("noise", data=separated_noise)
 
 
 def plot_testing(noisy_signal, denoised_signal, separated_noise, clean_signal, true_noise, idx, sqz, directory=None, dt=0.1, npts=None):
@@ -523,7 +638,7 @@ def plot_testing(noisy_signal, denoised_signal, separated_noise, clean_signal, t
     #######################################################
     ev_score = Explained_Variance_score()
     loss_fn = CCLoss()
-    comps = ['T', 'R', 'Z']
+    comps = ['E', 'N', 'Z']
     # scores = np.zeros((1, 3, 4))
     ##################################
     scores = np.zeros((1, 3, 6))     #

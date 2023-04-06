@@ -146,6 +146,7 @@ test = ["coverage"]
 [project.scripts]  # Optional
 denote_train = "qshiproj.denote:train"
 denote_test = "qshiproj.denote:test"
+denote_predict = "qshiproj.denote:predict"
 
 
 # This is configuration specific to the `setuptools` build backend.
