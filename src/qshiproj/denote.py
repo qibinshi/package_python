@@ -474,6 +474,8 @@ def predict(configure_file='config.ini'):
     use_demo = config.getint('prediction', 'use_demo')
     data_wave = storage_home + config.get('prediction', 'data_wave')
     rslt_dir = storage_home + config.get('prediction', 'result_dir')
+    branch_signal = config.get('prediction', 'branch_signal')
+    branch_noise = config.get('prediction', 'branch_noise')
     npts = config.getint('prediction', 'npts')
     start_pt = config.getint('prediction', 'start_point')
     pre_trained_denote = pkg_resources.resource_filename(__name__, 'pretrained_models/Denote_weights.pth')
@@ -495,7 +497,7 @@ def predict(configure_file='config.ini'):
     ############ %% Input data %% ###############
     print("#" * 12 + " Loading noisy data " + "#" * 12)
     with h5py.File(wave_raw, 'r') as f:
-        input_raw = f['pwave'][:, start_pt:start_pt + npts, :]
+        input_raw = f['quake'][:, start_pt:start_pt + npts, :]
 
     # %% load data for pytorch
     test_data = WaveformDataset(input_raw, input_raw)
