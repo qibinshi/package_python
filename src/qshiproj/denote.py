@@ -475,6 +475,7 @@ def predict(configure_file='config.ini'):
     data_wave = storage_home + config.get('prediction', 'data_wave')
     rslt_dir = storage_home + config.get('prediction', 'result_dir')
     data_key = config.get('prediction', 'data_key')
+    sample_index = config.getint('prediction', 'sample_index')
     npts = config.getint('prediction', 'npts')
     start_pt = config.getint('prediction', 'start_point')
     pre_trained_denote = pkg_resources.resource_filename(__name__, 'pretrained_models/Denote_weights.pth')
@@ -554,14 +555,14 @@ def predict(configure_file='config.ini'):
     gs_kw = dict(height_ratios=[1, 1, 1, 2])
     fig, ax = plt.subplots(4, 3, gridspec_kw=gs_kw, figsize=(12, 12), constrained_layout=True)
     for i in range(3):
-        scaling_factor = np.max(abs(noisy_signal[0, i, :]))
-        _, spect_noisy_signal = waveform_fft(noisy_signal[0, i, :] / scaling_factor, dt)
-        _, spect_noise = waveform_fft(separated_noise[0, i, :] / scaling_factor, dt)
-        freq, spect_denoised_signal = waveform_fft(denoised_signal[0, i, :] / scaling_factor, dt)
+        scaling_factor = np.max(abs(noisy_signal[sample_index, i, :]))
+        _, spect_noisy_signal = waveform_fft(noisy_signal[sample_index, i, :] / scaling_factor, dt)
+        _, spect_noise = waveform_fft(separated_noise[sample_index, i, :] / scaling_factor, dt)
+        freq, spect_denoised_signal = waveform_fft(denoised_signal[sample_index, i, :] / scaling_factor, dt)
 
-        ax[i, 0].plot(time, noisy_signal[0, i, :] / scaling_factor, '-k', label='Noisy signal', linewidth=1)
-        ax[i, 1].plot(time, denoised_signal[0, i, :] / scaling_factor, '-r', label='Predicted signal', linewidth=1)
-        ax[i, 2].plot(time, separated_noise[0, i, :] / scaling_factor, '-b', label='Predicted noise', linewidth=1)
+        ax[i, 0].plot(time, noisy_signal[sample_index, i, :] / scaling_factor, '-k', label='Noisy signal', linewidth=1)
+        ax[i, 1].plot(time, denoised_signal[sample_index, i, :] / scaling_factor, '-r', label='Predicted signal', linewidth=1)
+        ax[i, 2].plot(time, separated_noise[sample_index, i, :] / scaling_factor, '-b', label='Predicted noise', linewidth=1)
         ax[3, i].loglog(freq, spect_noisy_signal, '-k', label='raw signal', linewidth=0.5, alpha=1)
         ax[3, i].loglog(freq, spect_denoised_signal, '-r', label='separated earthquake', linewidth=0.5, alpha=1)
         ax[3, i].loglog(freq, spect_noise, '-b', label='noise', linewidth=0.5, alpha=0.8)
@@ -599,23 +600,23 @@ def predict(configure_file='config.ini'):
     bins = np.linspace(0, 100, 20)
     plt.close("all")
 
-    fig, ax = plt.subplots(1, 2, figsize=(4, 4), constrained_layout=True)
+    fig, ax = plt.subplots(1, 2, figsize=(8, 4), constrained_layout=True)
     ax[0].hist(snr_before.flatten(), bins=bins, density=True,
                   histtype='stepfilled', color='0.9', alpha=0.5, label='noisy', lw=2)
     ax[0].hist(snr_after.flatten(), bins=bins, density=True,
                   histtype='stepfilled', color='r', alpha=0.3, label='denoised', lw=2)
-    ax[0].set_title('All components', fontsize=24)
-    ax[0].set_xlabel('SNR', fontsize=24)
-    ax[0].set_ylabel('density', fontsize=24)
+    ax[0].set_title('All components', fontsize=16)
+    ax[0].set_xlabel('SNR', fontsize=16)
+    ax[0].set_ylabel('density', fontsize=16)
     ax[0].legend(loc=1)
 
     ax[1].hist(np.nanmax(snr_before, axis=1), bins=bins, density=True,
                histtype='stepfilled', color='0.9', alpha=0.5, label='noisy', lw=2)
     ax[1].hist(np.nanmax(snr_after, axis=1), bins=bins, density=True,
                histtype='stepfilled', color='r', alpha=0.3, label='denoised', lw=2)
-    ax[1].set_title('Best components', fontsize=24)
-    ax[1].set_xlabel('SNR', fontsize=24)
-    ax[1].set_ylabel('density', fontsize=24)
+    ax[1].set_title('Best components', fontsize=16)
+    ax[1].set_xlabel('SNR', fontsize=16)
+    ax[1].set_ylabel('density', fontsize=16)
     ax[1].legend(loc=1)
 
     plt.savefig(rslt_dir + '/SNR.pdf')
