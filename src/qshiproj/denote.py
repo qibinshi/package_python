@@ -550,6 +550,7 @@ def predict(configure_file='config.ini'):
     # %% visualize the first 3-component waveform
     plt.close("all")
     comps = ['E', 'N', 'Z']
+    time = np.arange(0, npts) * dt
     gs_kw = dict(height_ratios=[1, 1, 1, 2])
     fig, ax = plt.subplots(4, 3, gridspec_kw=gs_kw, figsize=(12, 12), constrained_layout=True)
     for i in range(3):
